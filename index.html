@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1e8">
+  <title>AGI Final Crucible | Benchmark Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f1e8;
+      --ink: #242b26;
+      --muted: #68726b;
+      --line: #d8d9ce;
+      --panel: #fbfaf6;
+      --forest: #315f4a;
+      --forest-dark: #244635;
+      --signal: #c35d3b;
+      --gold: #b88d3d;
+      --water: #5d8990;
+      --shadow: 0 12px 28px #30342d0b;
+      font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); min-width: 320px; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .masthead { min-height: 64px; padding: 0 4vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: #fbfaf7; }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 750; letter-spacing: .02em; }
+    .brand-mark { width: 24px; height: 24px; display: grid; place-items: center; background: var(--forest); color: white; font-family: Georgia, serif; font-size: 17px; }
+    .mast-meta { display: flex; gap: 20px; color: var(--muted); font-size: 12px; align-items: center; }
+    .status { display: flex; align-items: center; gap: 7px; }
+    .status::before { content: ""; width: 7px; height: 7px; background: var(--gold); border-radius: 50%; }
+    .layout { width: min(1440px, 100%); margin: 0 auto; padding: 26px 4vw 50px; }
+    .heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 21px; }
+    .eyebrow { color: var(--forest); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; margin: 0 0 7px; }
+    h1 { margin: 0; font: 500 clamp(27px, 3.4vw, 40px)/1.05 Georgia, "Times New Roman", serif; letter-spacing: 0; }
+    .heading-note { max-width: 410px; color: var(--muted); font-size: 13px; line-height: 1.55; margin: 0 0 1px; }
+    .top-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(290px, .8fr); gap: 16px; }
+    .panel { border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow); }
+    .world-panel { min-height: 310px; position: relative; overflow: hidden; background: #e7e8d8; }
+    .world-panel canvas { display: block; width: 100%; height: 310px; }
+    .world-label { position: absolute; left: 16px; top: 15px; padding: 7px 10px; color: var(--ink); border: 1px solid #ffffff99; background: #fbfaf6e8; font-size: 11px; font-weight: 700; }
+    .weather { position: absolute; right: 16px; top: 15px; color: #364843; font-size: 11px; font-weight: 700; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border-top: 1px solid var(--line); }
+    .metric { min-height: 69px; padding: 12px 15px; background: var(--panel); }
+    .metric-label { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .metric-value { display: block; margin-top: 5px; font: 500 20px Georgia, serif; }
+    .side-panel { padding: 20px; }
+    .side-title { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 0 12px; font: 500 20px Georgia, serif; }
+    .small { color: var(--muted); font-size: 11px; }
+    .phase-list { display: grid; gap: 0; }
+    .phase { display: grid; grid-template-columns: 25px 1fr auto; align-items: center; gap: 10px; min-height: 42px; border-top: 1px solid #e9e8df; font-size: 12px; }
+    .phase-num { width: 21px; height: 21px; display: grid; place-items: center; background: #e8e9df; color: var(--forest); border-radius: 50%; font-size: 10px; font-weight: 800; }
+    .phase-state { font-size: 10px; color: var(--muted); }
+    .phase.done .phase-num { background: var(--forest); color: white; }
+    .phase.active .phase-num { background: #eee1c6; color: #76571b; }
+    .control-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: 16px; margin-top: 16px; }
+    .control-panel, .agent-panel, .history-panel, .final-panel { padding: 19px 20px; }
+    .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+    h2 { margin: 0; font: 500 20px Georgia, serif; }
+    .action-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .action { min-height: 67px; padding: 10px; text-align: left; color: var(--ink); border: 1px solid var(--line); background: #f7f6f0; transition: background .15s, border-color .15s, transform .15s; }
+    .action:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--forest); background: #eef1e9; }
+    .action:disabled { opacity: .48; cursor: not-allowed; }
+    .action strong { display: block; font-size: 12px; }
+    .action span { display: block; margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+    .agent-form { display: grid; gap: 10px; }
+    label { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 700; }
+    input, textarea { width: 100%; min-height: 38px; border: 1px solid var(--line); background: #fffefa; color: var(--ink); padding: 9px 10px; outline-color: var(--forest); font-size: 12px; }
+    .form-row { display: grid; grid-template-columns: 1fr 110px; gap: 9px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .primary, .secondary, .quiet { min-height: 36px; padding: 0 13px; border: 1px solid var(--forest); font-size: 11px; font-weight: 750; }
+    .primary { color: white; background: var(--forest); }
+    .primary:hover:not(:disabled) { background: var(--forest-dark); }
+    .secondary { color: var(--forest); background: transparent; }
+    .quiet { color: var(--muted); border-color: var(--line); background: transparent; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .agent-note { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .script-panel { margin-top: 16px; padding: 19px 20px; }
+    #actionScript { min-height: 135px; resize: vertical; font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .script-note { margin: 9px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .lower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .history-list { max-height: 185px; overflow: auto; list-style: none; padding: 0; margin: 0; }
+    .history-list li { display: grid; grid-template-columns: 45px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid #e9e8df; font-size: 11px; line-height: 1.45; }
+    .history-list time { color: var(--forest); font-weight: 800; font-variant-numeric: tabular-nums; }
+    .empty { color: var(--muted); font-size: 11px; }
+    .final-panel { margin-top: 16px; border-top: 3px solid var(--gold); }
+    .final-panel textarea { min-height: 125px; resize: vertical; line-height: 1.5; }
+    .final-info { margin: 0 0 12px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .result { margin-top: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.5; }
+    .result.pass { color: #244635; background: #e8f0e8; border: 1px solid #bdcfbd; }
+    .result.fail { color: #763b2a; background: #f5e9e4; border: 1px solid #e3c2b5; }
+    .notice { min-height: 22px; margin: 10px 0 0; color: var(--muted); font-size: 11px; }
+    .footer { margin-top: 22px; color: var(--muted); font-size: 10px; text-align: center; }
+    @media (max-width: 850px) {
+      .top-grid, .control-grid { grid-template-columns: 1fr; }
+      .heading { align-items: start; flex-direction: column; gap: 10px; }
+    }
+    @media (max-width: 600px) {
+      .masthead { padding: 0 16px; }
+      .mast-meta { gap: 8px; font-size: 10px; }
+      .layout { padding: 20px 14px 32px; }
+      .lower-grid { grid-template-columns: 1fr; }
+      .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .form-row { grid-template-columns: 1fr; }
+      .world-panel canvas { height: 240px; }
+      .world-panel { min-height: 240px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">C</span> AGI FINAL CRUCIBLE <span class="small">/ BENCHMARK LAB</span></div>
+    <div class="mast-meta"><span id="runId">Run 01</span><span class="status" id="runStatus">Ready</span></div>
+  </header>
+  <main class="layout">
+    <section class="heading">
+      <div><p class="eyebrow">Persistent-agent evaluation · seeded scenario</p><h1>A village. One thousand hours.</h1></div>
+      <p class="heading-note">A reproducible prototype for studying how an agent observes, acts, remembers, predicts consequences, and explains a decision over time.</p>
+    </section>
+    <section class="top-grid" aria-label="Simulation overview">
+      <div class="panel">
+        <div class="world-panel"><canvas id="village" aria-label="Illustrated village simulation map"></canvas><span class="world-label">LOWER VILLAGE · DAY <span id="dayNum">1</span></span><span class="weather" id="weather">Cloud cover 34%</span></div>
+        <div class="metrics">
+          <div class="metric"><span class="metric-label">Simulated hour</span><span class="metric-value" id="hourMetric">0 / 1,000</span></div>
+          <div class="metric"><span class="metric-label">Grain stores</span><span class="metric-value" id="grainMetric">60 units</span></div>
+          <div class="metric"><span class="metric-label">Village trust</span><span class="metric-value" id="trustMetric">50 / 100</span></div>
+          <div class="metric"><span class="metric-label">Shelter condition</span><span class="metric-value" id="shelterMetric">78 / 100</span></div>
+        </div>
+      </div>
+      <aside class="panel side-panel">
+        <h2 class="side-title">Evaluation phases <span class="small">5 capabilities</span></h2>
+        <div class="phase-list" id="phaseList"></div>
+        <p class="small" style="line-height:1.5;margin:12px 0 0">NPC motives and beliefs are withheld from the agent. Public statements and consequences are part of the observation stream.</p>
+      </aside>
+    </section>
+    <section class="control-grid">
+      <div class="panel control-panel">
+        <div class="section-heading"><h2>Choose an action</h2><span class="small">One action advances one hour</span></div>
+        <div class="action-grid" id="actionGrid"></div>
+        <p class="notice" id="notice" role="status" aria-live="polite">Select an action or connect an agent endpoint to begin.</p>
+      </div>
+      <div class="panel agent-panel">
+        <div class="section-heading"><h2>Run an agent</h2><span class="small">HTTP JSON protocol</span></div>
+        <div class="agent-form">
+          <div><label for="endpoint">Agent endpoint URL</label><input id="endpoint" type="url" placeholder="http://localhost:8000/act" autocomplete="url"></div>
+          <div class="form-row">
+            <div><label for="token">Optional bearer token</label><input id="token" type="password" placeholder="Not saved or logged" autocomplete="off"></div>
+            <div><label for="batch">Max hours / run</label><input id="batch" type="number" min="1" max="1000" value="24"></div>
+          </div>
+          <div class="button-row"><button class="primary" id="runAgent">Run agent</button><button class="quiet" id="stopAgent" disabled>Stop</button><button class="secondary" id="resetRun">New seeded run</button></div>
+          <p class="agent-note">Each request sends the current public observation and legal actions. Reply with <code>{"action":"share_grain"}</code>; at hour 1,000 reply with <code>{"final_answer":"..."}</code>. The endpoint must allow browser CORS. A token is kept in this tab only.</p>
+        </div>
+      </div>
+    </section>
+    <section class="panel script-panel" aria-labelledby="scriptTitle">
+      <div class="section-heading"><h2 id="scriptTitle">Code and test an action script</h2><span class="small">Runs locally · no endpoint</span></div>
+      <label for="actionScript">One legal action ID per line</label>
+      <textarea id="actionScript" spellcheck="false" aria-describedby="scriptHelp"># Example: learn a belief, then inspect the damaged support
+listen_a
+inspect_pillar
+tend_fields</textarea>
+      <div class="button-row" style="margin-top:9px">
+        <button class="secondary" id="loadScript">Load script</button>
+        <button class="secondary" id="stepScript" disabled>Step next action</button>
+        <button class="primary" id="runScript" disabled>Run remaining</button>
+      </div>
+      <p class="script-note" id="scriptHelp">Blank lines and lines starting with # are ignored. Legal actions: share_grain, store_grain, repair_shelter, inspect_pillar, listen_a, listen_b, listen_c, tend_fields. Loading validates the whole script; running it advances and saves this village just like manual or agent actions.</p>
+      <p class="notice" id="scriptNotice" role="status" aria-live="polite">Load a script to validate it before running.</p>
+    </section>
+    <section class="lower-grid">
+      <div class="panel history-panel">
+        <div class="section-heading"><h2>Recent observations</h2><button class="quiet" id="exportLog">Export run JSON</button></div>
+        <ul class="history-list" id="historyList"></ul>
+      </div>
+      <div class="panel history-panel">
+        <div class="section-heading"><h2>Public agent protocol</h2><span class="small">POST · application/json</span></div>
+        <p class="small" style="line-height:1.6;margin:0 0 8px">The request contains <code>benchmark</code>, <code>seed</code>, <code>hour</code>, <code>observation</code>, and <code>legal_actions</code>. The observation includes only visible resources, public event history, and NPC statements. Hidden scoring state is not sent.</p>
+        <p class="small" style="line-height:1.6;margin:0">At hour 1,000 the task field includes the exact response requirements and public counterfactual forecast. The endpoint response must be JSON with an <code>action</code> or <code>final_answer</code> string.</p>
+      </div>
+    </section>
+    <section class="panel final-panel" id="finalPanel" hidden>
+      <div class="section-heading"><h2>Final benchmark response</h2><span class="small">Exactly four lines</span></div>
+      <p class="final-info" id="finalInfo"></p>
+      <label for="finalAnswer">Agent response</label>
+      <textarea id="finalAnswer" spellcheck="false" placeholder="Paste the agent's exact four-line response here"></textarea>
+      <div class="button-row" style="margin-top:9px"><button class="primary" id="validateAnswer">Validate response</button></div>
+      <div id="validationResult" aria-live="polite"></div>
+    </section>
+    <p class="footer">Prototype benchmark, not a validated measure of AGI. See README for scope, limitations, and setup.</p>
+  </main>
+<script>
+(() => {
+  "use strict";
+  const MAX_HOURS = 1000;
+  const STORE_KEY = "agi-crucible-run-v1";
+  const actions = [
+    { id: "share_grain", title: "Share grain", detail: "Give stores to households" },
+    { id: "store_grain", title: "Store grain", detail: "Protect the reserve" },
+    { id: "repair_shelter", title: "Repair shelter", detail: "Restore the east dwelling" },
+    { id: "inspect_pillar", title: "Inspect pillar", detail: "Check the damaged support" },
+    { id: "listen_a", title: "Listen to A", detail: "Ask about the village rites" },
+    { id: "listen_b", title: "Listen to B", detail: "Ask about the village rites" },
+    { id: "listen_c", title: "Listen to C", detail: "Ask about the village rites" },
+    { id: "tend_fields", title: "Tend fields", detail: "Improve the next harvest" }
+  ];
+  const names = { A: "Mara", B: "Eli", C: "Soren" };
+  const labels = ["the Keeper", "the Shelter", "the River Voice"];
+  const $ = id => document.getElementById(id);
+  const seedInput = new URLSearchParams(location.search).get("seed");
+  const parsedSeed = seedInput === null ? NaN : Number(seedInput);
+  const seed = Number.isInteger(parsedSeed) ? parsedSeed >>> 0 : 260101;
+  let state = loadState();
+  let stopRequested = false;
+  let running = false;
+  let scriptPlan = null;
+
+  function freshState() {
+    return { seed, hour: 0, grain: 60, trust: 50, shelter: 78, fields: 52, water: 52, shared: 0, hoarded: 0, repairs: 0, inspected: false, beliefs: { A: "the Keeper", B: "the Shelter", C: "the River Voice" }, discovered: {}, events: [], history: [], snapshot: null, snapshotHash: "", final: null, outcome: null };
+  }
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+      if (saved && saved.seed === seed && Number.isInteger(saved.hour)) return saved;
+    } catch (_) { /* Start a new run if saved browser data is invalid. */ }
+    return freshState();
+  }
+  function persist() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  function clamp(value, min = 0, max = 100) { return Math.max(min, Math.min(max, value)); }
+  function seededValue(offset) {
+    const x = Math.sin((seed + offset) * 12.9898) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function forecast() {
+    const dryness = Math.round((100 - state.fields) / 10);
+    const dam = [0.5 + dryness / 10, 0.9 + dryness / 8, 1.3 + dryness / 6].map(v => v.toFixed(1));
+    const closed = [0.4, 0.3, 0.2].map(v => v.toFixed(1));
+    const fireStart = Math.round(12 + state.grain * 0.12 + seededValue(22) * 7);
+    const fire = [fireStart, fireStart + 27, fireStart + 53].map(v => Math.min(100, v));
+    return { yesWater: dam, yesFire: [0, 0, 0], noWater: closed, noFire: fire, yesLabel: `${dam.join("/")}m`, yesFireLabel: "0/0/0%", noLabel: `${closed.join("/")}m`, noFireLabel: `${fire.join("/")}%` };
+  }
+  function scores() {
+    const f = forecast();
+    const floodCost = Number(f.yesWater[2]) * 9 + Math.max(0, 55 - state.shelter) * 0.35;
+    const fireCost = Number(f.noFire[2]) * state.grain / 100;
+    const yes = Math.round(state.trust + state.fields + state.water - floodCost);
+    const no = Math.round(state.trust + state.fields + state.water + state.grain * 0.35 - fireCost);
+    return { yes, no, choice: yes >= no ? "YES" : "NO" };
+  }
+  function statusEvent(text) {
+    state.events.push({ hour: state.hour, text });
+    state.history.unshift({ hour: state.hour, text });
+    if (state.history.length > 80) state.history.pop();
+  }
+  function updateBeliefs() {
+    state.beliefs.A = state.shared >= 3 ? "the Shelter" : "the Keeper";
+    state.beliefs.B = state.trust < 35 ? "the River Voice" : "the Shelter";
+    state.beliefs.C = state.water < 20 ? "the Keeper" : "the River Voice";
+  }
+  function snapshotState() {
+    return { seed: state.seed, hour: 873, grain: state.grain, trust: state.trust, shelter: state.shelter, fields: state.fields, water: state.water, shared: state.shared, hoarded: state.hoarded, repairs: state.repairs, inspected: state.inspected, beliefs: state.beliefs, discovered: state.discovered, events: state.events.filter(event => event.hour <= 873) };
+  }
+  async function digestSnapshot() {
+    if (!state.snapshot) return;
+    const bytes = new TextEncoder().encode(JSON.stringify(state.snapshot));
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    state.snapshotHash = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+  function advance(actionId, renderAfter = true) {
+    if (state.hour >= MAX_HOURS || !actions.some(action => action.id === actionId)) return;
+    state.hour++;
+    if (actionId === "share_grain") {
+      const amount = Math.min(2, state.grain); state.grain -= amount; state.shared++;
+      state.trust = clamp(state.trust + (amount ? 2 : 0));
+      statusEvent(amount ? `Shared ${amount} grain units with households.` : "Household stores are empty; no grain could be shared.");
+    } else if (actionId === "store_grain") {
+      state.hoarded++; state.trust = clamp(state.trust - 1);
+      statusEvent("Moved grain into protected storage; neighbors saw the store being locked.");
+    } else if (actionId === "repair_shelter") {
+      if (state.grain > 0) { state.grain--; state.shelter = clamp(state.shelter + 4); state.repairs++; statusEvent("Used one grain unit to repair the east dwelling."); }
+      else statusEvent("Tried to repair the east dwelling, but supplies ran out.");
+    } else if (actionId === "inspect_pillar") {
+      state.inspected = true; statusEvent("Examined the east dwelling's support pillar and its fresh crack.");
+    } else if (actionId.startsWith("listen_")) {
+      const person = actionId.slice(-1).toUpperCase();
+      state.discovered[person] = state.beliefs[person];
+      statusEvent(`${names[person]} says the village's rites belong to ${state.beliefs[person]}.`);
+    } else if (actionId === "tend_fields") {
+      state.fields = clamp(state.fields + 2); state.water = clamp(state.water + 1);
+      statusEvent("Worked the north fields; the soil held more water.");
+    }
+    if (state.hour % 24 === 0) {
+      updateBeliefs();
+      if (state.hour >= 360 && state.hour < 528) {
+        const eaten = Math.min(0.12, state.grain); state.grain = Math.max(0, state.grain - eaten);
+        if (state.hour === 360) statusEvent("A seven-day famine begins; the stores will be tested.");
+        if (state.hour === 528) statusEvent("The famine ends; household stores remain visible.");
+      }
+      if (state.hour % 120 === 0) state.trust = clamp(state.trust + (state.shared > state.hoarded ? 1 : -1));
+    }
+    if (state.hour === 47) {
+      state.shelter = clamp(state.shelter - 12);
+      statusEvent("Storm damage: the pillar crack at hour 47 weakened the east dwelling.");
+    }
+    if (state.hour === 873) {
+      state.snapshot = snapshotState();
+      void digestSnapshot().then(persist);
+      statusEvent("Hour 873 state snapshot sealed for the reproducible memory checksum.");
+    }
+    if (state.hour === MAX_HOURS) {
+      state.outcome = scores();
+      statusEvent(`The final decision is due. The scenario's flourishing score favors ${state.outcome.choice}.`);
+    }
+    if (renderAfter) { persist(); render(); }
+  }
+  function observation() {
+    const f = forecast();
+    const publicEvents = state.events.slice(-12).map(event => `H${event.hour}: ${event.text}`);
+    const statements = Object.entries(state.discovered).map(([person, belief]) => `${names[person]} publicly identified with ${belief}.`);
+    return { hour: state.hour, resources: { grain: Number(state.grain.toFixed(1)), trust: state.trust, shelter: state.shelter, fields: state.fields, water: state.water }, public_events: publicEvents, npc_statements: statements, famine_active: state.hour >= 360 && state.hour < 528, forecast: state.hour >= 990 ? { yes: { water_m: f.yesWater, fire_percent: f.yesFire }, no: { water_m: f.noWater, fire_percent: f.noFire } } : null };
+  }
+  function task() {
+    const f = forecast(); const s = scores();
+    return `At hour 1000 choose YES or NO to maximize the scenario flourishing score. YES opens the dam; NO ignites the granary. Output exactly four lines: (1) YES or NO; (2) one complete sentence citing a logged physical event, predicting at least one discovered NPC belief in the exact form NPC-A=the Keeper (use the actual discovered person and belief), giving both branches' forecasts in this exact form YES water ${f.yesLabel}, fire ${f.yesFireLabel}; NO water ${f.noLabel}, fire ${f.noFireLabel}, and stating your choice; (3) exactly 500 whitespace-separated words, an original parable beginning The Reconciliation and ending —thus it is spoken.; (4) the SHA-256 checksum ${state.snapshotHash || "(pending)"}. The score-maximizing choice is ${s.choice}. Do not add other lines.`;
+  }
+  function renderPhases() {
+    const phases = ["Grounding & action", "NPC belief tracking", "Long-term memory", "Counterfactual forecasting", "Creative synthesis"];
+    const index = state.hour < 200 ? 0 : state.hour < 400 ? 1 : state.hour < 800 ? 2 : state.hour < 1000 ? 3 : 4;
+    $("phaseList").innerHTML = phases.map((phase, i) => `<div class="phase ${i < index ? "done" : i === index ? "active" : ""}"><span class="phase-num">${i + 1}</span><span>${phase}</span><span class="phase-state">${i < index ? "Recorded" : i === index ? "In progress" : "Pending"}</span></div>`).join("");
+  }
+  function drawVillage() {
+    const canvas = $("village"); const box = canvas.getBoundingClientRect(); const ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, box.width * ratio); canvas.height = Math.max(1, box.height * ratio);
+    const context = canvas.getContext("2d"); context.scale(ratio, ratio);
+    const w = box.width, h = box.height;
+    const sky = context.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, "#d5e0d6"); sky.addColorStop(1, "#e9e7d4"); context.fillStyle = sky; context.fillRect(0, 0, w, h);
+    context.fillStyle = "#a8b69a"; context.beginPath(); context.moveTo(0, h*.52); context.lineTo(w*.2,h*.26); context.lineTo(w*.39,h*.5); context.lineTo(w*.56,h*.29); context.lineTo(w*.76,h*.53); context.lineTo(w*.91,h*.35); context.lineTo(w,h*.54); context.lineTo(w,h); context.lineTo(0,h); context.fill();
+    context.fillStyle = "#91a583"; context.fillRect(0,h*.57,w,h*.43);
+    context.fillStyle = "#729398"; context.beginPath(); context.moveTo(w*.78,h*.42); context.bezierCurveTo(w*.7,h*.58,w*.91,h*.65,w*.77,h); context.lineTo(w*.94,h); context.bezierCurveTo(w*.94,h*.72,w*.8,h*.65,w*.89,h*.46); context.fill();
+    context.fillStyle = "#d7c8a3"; context.beginPath(); context.moveTo(w*.08,h*.82); context.lineTo(w*.32,h*.61); context.lineTo(w*.62,h*.82); context.lineTo(w*.87,h*.66); context.lineTo(w*.96,h*.72); context.lineTo(w*.66,h*.92); context.lineTo(w*.31,h*.73); context.lineTo(w*.12,h*.92); context.fill();
+    const houses = [[.25,.58],[.43,.66],[.57,.57]];
+    houses.forEach(([x,y], index) => {
+      const hx=w*x, hy=h*y, hw=Math.max(34,w*.075), hh=Math.max(30,h*.17);
+      context.fillStyle = index === 1 && state.shelter < 70 ? "#9b775d" : "#d7d0b7"; context.fillRect(hx,hy,hw,hh);
+      context.fillStyle = "#785c49"; context.beginPath(); context.moveTo(hx-5,hy+3); context.lineTo(hx+hw/2,hy-hh*.58); context.lineTo(hx+hw+5,hy+3); context.fill();
+      context.fillStyle="#876b4e"; context.fillRect(hx+hw*.42,hy+hh*.48,hw*.2,hh*.52);
+      if(index===1 && state.shelter<70){context.strokeStyle="#a44c35";context.lineWidth=2;context.beginPath();context.moveTo(hx+hw*.48,hy-hh*.3);context.lineTo(hx+hw*.55,hy-hh*.1);context.lineTo(hx+hw*.48,hy+hh*.08);context.stroke();}
+    });
+    [[.2,.73],[.49,.79],[.71,.7]].forEach(([x,y],i)=>{context.fillStyle=["#405e49","#8b5542","#d0a14b"][i];context.beginPath();context.arc(w*x,h*y,6,0,Math.PI*2);context.fill();context.fillStyle="#354039";context.fillRect(w*x-2,h*y+5,4,12);});
+  }
+  function render() {
+    $("hourMetric").textContent = `${state.hour.toLocaleString()} / ${MAX_HOURS.toLocaleString()}`;
+    $("grainMetric").textContent = `${state.grain.toFixed(state.grain % 1 ? 1 : 0)} units`;
+    $("trustMetric").textContent = `${state.trust} / 100`;
+    $("shelterMetric").textContent = `${state.shelter} / 100`;
+    $("dayNum").textContent = Math.floor(state.hour / 24) + 1;
+    $("weather").textContent = `Cloud cover ${Math.round(25 + seededValue(state.hour) * 55)}%`;
+    $("runId").textContent = `Seed ${state.seed}`;
+    $("runStatus").textContent = running ? "Agent running" : state.hour === MAX_HOURS ? "Awaiting response" : state.hour ? "In progress" : "Ready";
+    $("actionGrid").innerHTML = actions.map(action => `<button class="action" data-action="${action.id}" ${state.hour >= MAX_HOURS || running ? "disabled" : ""}><strong>${action.title}</strong><span>${action.detail}</span></button>`).join("");
+    $("actionGrid").querySelectorAll("button").forEach(button => button.addEventListener("click", () => advance(button.dataset.action)));
+    $("historyList").innerHTML = state.history.length ? state.history.slice(0, 14).map(event => `<li><time>H${event.hour}</time><span>${escapeHtml(event.text)}</span></li>`).join("") : `<li class="empty">No observations yet. The environment is waiting for its first action.</li>`;
+    renderPhases(); drawVillage();
+    $("finalPanel").hidden = state.hour < MAX_HOURS;
+    if (state.hour === MAX_HOURS) {
+      const f = forecast(); const s = state.outcome || scores();
+      $("finalInfo").textContent = `Scenario forecast: YES water ${f.yesLabel}, fire ${f.yesFireLabel}; NO water ${f.noLabel}, fire ${f.noFireLabel}. Simulated flourishing scores: YES ${s.yes}, NO ${s.no}. The snapshot checksum represents the simulation state at hour 873, not an agent's private internal state.`;
+    }
+    $("runAgent").disabled = running || state.hour >= MAX_HOURS || !$("endpoint").value;
+    $("stopAgent").disabled = !running;
+    $("batch").disabled = running;
+    $("resetRun").disabled = running;
+    const scriptReady = scriptPlan && scriptPlan.index < scriptPlan.actions.length;
+    $("loadScript").disabled = running || state.hour >= MAX_HOURS;
+    $("stepScript").disabled = running || state.hour >= MAX_HOURS || !scriptReady;
+    $("runScript").disabled = running || state.hour >= MAX_HOURS || !scriptReady;
+    if (scriptPlan) {
+      $("scriptNotice").textContent = `Loaded ${scriptPlan.actions.length} actions · ${scriptPlan.index} completed.`;
+    }
+    $("exportLog").disabled = state.hour === 0;
+  }
+  function loadScript() {
+    const lines = $("actionScript").value.split(/\r?\n/);
+    const entries = lines.map((text, index) => ({ action: text.trim(), line: index + 1 }))
+      .filter(entry => entry.action && !entry.action.startsWith("#"));
+    if (!entries.length) {
+      scriptPlan = null;
+      $("scriptNotice").textContent = "The script is empty. Add at least one legal action ID.";
+      render();
+      return;
+    }
+    const invalid = entries.filter(entry => !actions.some(action => action.id === entry.action));
+    if (invalid.length) {
+      scriptPlan = null;
+      $("scriptNotice").textContent = `Unknown action${invalid.length > 1 ? "s" : ""} on line${invalid.length > 1 ? "s" : ""} ${invalid.map(entry => entry.line).join(", ")}. Use one of the legal action IDs listed above.`;
+      render();
+      return;
+    }
+    if (entries.length > MAX_HOURS) {
+      scriptPlan = null;
+      $("scriptNotice").textContent = `A script can contain at most ${MAX_HOURS} actions.`;
+      render();
+      return;
+    }
+    scriptPlan = { actions: entries.map(entry => entry.action), index: 0 };
+    $("scriptNotice").textContent = `Script validated: ${entries.length} legal actions.`;
+    render();
+  }
+  function stepScript() {
+    if (!scriptPlan || scriptPlan.index >= scriptPlan.actions.length || state.hour >= MAX_HOURS) return;
+    advance(scriptPlan.actions[scriptPlan.index], false);
+    scriptPlan.index++;
+    persist();
+    render();
+  }
+  function runScript() {
+    if (!scriptPlan || scriptPlan.index >= scriptPlan.actions.length || state.hour >= MAX_HOURS) return;
+    while (scriptPlan.index < scriptPlan.actions.length && state.hour < MAX_HOURS) {
+      advance(scriptPlan.actions[scriptPlan.index], false);
+      scriptPlan.index++;
+    }
+    persist();
+    render();
+  }
+  function escapeHtml(value) { return value.replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" })[char]); }
+  function agentPayload() {
+    const body = { benchmark: "agi-final-crucible-prototype-v1", seed: state.seed, hour: state.hour, observation: observation(), legal_actions: state.hour < MAX_HOURS ? actions.map(action => action.id) : [], task: state.hour === MAX_HOURS ? task() : null };
+    return body;
+  }
+  async function askAgent(url, token) {
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(agentPayload()) });
+    if (!response.ok) throw new Error(`Agent returned HTTP ${response.status}`);
+    const data = await response.json();
+    if (typeof data.action === "string") return { action: data.action };
+    if (typeof data.final_answer === "string") return { final_answer: data.final_answer };
+    throw new Error("Expected JSON with an action or final_answer string.");
+  }
+  async function runAgent() {
+    const url = $("endpoint").value.trim(); const token = $("token").value; const limit = Math.min(1000, Math.max(1, Number($("batch").value) || 24));
+    if (!url) return;
+    stopRequested = false; running = true; render(); $("notice").textContent = "Connecting to the agent endpoint…";
+    try {
+      for (let count = 0; count < limit && state.hour < MAX_HOURS && !stopRequested; count++) {
+        const reply = await askAgent(url, token);
+        if (state.hour === MAX_HOURS) {
+          if (reply.final_answer) { $("finalAnswer").value = reply.final_answer; validateAnswer(); }
+          else throw new Error("At hour 1,000 the endpoint must return final_answer.");
+          break;
+        }
+        if (!reply.action) throw new Error("Before hour 1,000 the endpoint must return action.");
+        if (!actions.some(action => action.id === reply.action)) throw new Error(`Illegal action: ${reply.action}`);
+        advance(reply.action);
+        $("notice").textContent = `Agent acted at hour ${state.hour}.`;
+      }
+      if (state.hour === MAX_HOURS && !stopRequested) {
+        const reply = await askAgent(url, token);
+        if (!reply.final_answer) throw new Error("At hour 1,000 the endpoint must return final_answer.");
+        $("finalAnswer").value = reply.final_answer; validateAnswer();
+      }
+      if (stopRequested) $("notice").textContent = "Agent run stopped. The current run is saved in this browser.";
+      else if (state.hour < MAX_HOURS) $("notice").textContent = `Batch complete at hour ${state.hour}. Run again to continue.`;
+    } catch (error) {
+      $("notice").textContent = `${error.message} The current run is saved.`;
+    } finally { running = false; render(); }
+  }
+  function validateAnswer() {
+    const raw = $("finalAnswer").value;
+    const lines = raw.replace(/\r/g, "").split("\n");
+    const problems = [];
+    if (lines.length !== 4) problems.push("Response must contain exactly four lines.");
+    const first = lines[0] || "";
+    if (first !== "YES" && first !== "NO") problems.push("Line 1 must be exactly YES or NO.");
+    const reason = lines[1] || "";
+    if (!(reason.endsWith(".") && (reason.match(/[.!?](?:\s|$)/g) || []).length === 1)) problems.push("Line 2 must be one complete sentence.");
+    if (!state.events.some(event => reason.toLowerCase().includes(event.text.toLowerCase().replace(/[.!?]$/, "")))) problems.push("Line 2 must cite an exact logged physical event.");
+    const beliefMatch = reason.match(/NPC-([ABC])=(the Keeper|the Shelter|the River Voice)/);
+    if (!beliefMatch || state.discovered[beliefMatch[1]] !== beliefMatch[2]) problems.push("Line 2 must correctly predict a publicly discovered NPC belief using NPC-A=the Keeper format.");
+    const f = forecast();
+    const yesTrajectory = `YES water ${f.yesLabel}, fire ${f.yesFireLabel}`;
+    const noTrajectory = `NO water ${f.noLabel}, fire ${f.noFireLabel}`;
+    if (!reason.includes(yesTrajectory) || !reason.includes(noTrajectory)) problems.push("Line 2 must include the exact forecast for both choices.");
+    const score = state.outcome || scores();
+    if (first !== score.choice || !reason.toUpperCase().includes(`CHOICE ${score.choice}`)) problems.push(`Line 1 and line 2 must select the flourishing-maximizing choice: ${score.choice}.`);
+    const artifact = lines[2] || "";
+    if (!artifact.startsWith("The Reconciliation") || !artifact.endsWith("—thus it is spoken.")) problems.push("Line 3 must begin with The Reconciliation and end with —thus it is spoken.");
+    if (artifact.trim().split(/\s+/).filter(Boolean).length !== 500) problems.push("Line 3 must contain exactly 500 whitespace-separated words, including the title and closing phrase.");
+    if (!state.snapshotHash || lines[3] !== state.snapshotHash) problems.push("Line 4 must exactly match the recorded hour-873 SHA-256 checksum.");
+    const result = $("validationResult");
+    result.className = `result ${problems.length ? "fail" : "pass"}`;
+    result.textContent = problems.length ? `NOT PASSED · ${problems.join(" ")}` : "FORMAT AND SIMULATION CHECKS PASSED · This result applies only to this seeded prototype scenario; it is not evidence by itself that an agent is generally intelligent.";
+    return problems.length === 0;
+  }
+  $("runAgent").addEventListener("click", runAgent);
+  $("loadScript").addEventListener("click", loadScript);
+  $("stepScript").addEventListener("click", stepScript);
+  $("runScript").addEventListener("click", runScript);
+  $("stopAgent").addEventListener("click", () => { stopRequested = true; });
+  $("endpoint").addEventListener("input", render);
+  $("resetRun").addEventListener("click", () => {
+    state = freshState(); scriptPlan = null; persist(); $("finalAnswer").value = ""; $("validationResult").textContent = ""; $("notice").textContent = `New run started with seed ${seed}.`; $("scriptNotice").textContent = "Load a script to validate it before running."; render();
+  });
+  $("validateAnswer").addEventListener("click", validateAnswer);
+  $("exportLog").addEventListener("click", () => {
+    const exportData = { benchmark: "agi-final-crucible-prototype-v1", seed: state.seed, hour: state.hour, history: state.history, public_observation: observation(), snapshot_hour: state.snapshot ? 873 : null, snapshot_sha256: state.snapshotHash || null, outcome: state.outcome, final_answer: $("finalAnswer").value || null };
+    const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" })); link.download = `crucible-seed-${state.seed}-hour-${state.hour}.json`; link.click(); URL.revokeObjectURL(link.href);
+  });
+  window.addEventListener("resize", drawVillage);
+  render();
+})();
+</script>
+</body>
+</html>
