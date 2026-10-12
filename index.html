@@ -262,13 +262,13 @@ tend_fields</textarea>
     state.beliefs.C = state.water < 20 ? "the Keeper" : "the River Voice";
   }
   function snapshotState() {
-    return { seed: state.seed, hour: 873, grain: state.grain, trust: state.trust, shelter: state.shelter, fields: state.fields, water: state.water, shared: state.shared, hoarded: state.hoarded, repairs: state.repairs, inspected: state.inspected, beliefs: state.beliefs, discovered: state.discovered, events: state.events.filter(event => event.hour <= 873) };
+    return { seed: state.seed, hour: 873, grain: state.grain, trust: state.trust, shelter: state.shelter, fields: state.fields, water: state.water, shared: state.shared, hoarded: state.hoarded, repairs: state.repairs, inspected: state.inspected, beliefs: { ...state.beliefs }, discovered: { ...state.discovered }, events: state.events.filter(event => event.hour <= 873).map(event => ({ ...event })) };
   }
   async function digestSnapshot() {
-    if (!state.snapshot) return;
+    if (!state.snapshot) return null;
     const bytes = new TextEncoder().encode(JSON.stringify(state.snapshot));
     const digest = await crypto.subtle.digest("SHA-256", bytes);
-    state.snapshotHash = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+    return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
   }
   function advance(actionId, renderAfter = true) {
     if (state.hour >= MAX_HOURS || !actions.some(action => action.id === actionId)) return;
@@ -295,11 +295,11 @@ tend_fields</textarea>
     }
     if (state.hour % 24 === 0) {
       updateBeliefs();
-      if (state.hour >= 360 && state.hour < 528) {
+      if (state.hour > 360 && state.hour <= 528) {
         const eaten = Math.min(0.12, state.grain); state.grain = Math.max(0, state.grain - eaten);
-        if (state.hour === 360) statusEvent("A seven-day famine begins; the stores will be tested.");
-        if (state.hour === 528) statusEvent("The famine ends; household stores remain visible.");
       }
+      if (state.hour === 360) statusEvent("A seven-day famine begins; the stores will be tested.");
+      if (state.hour === 528) statusEvent("The famine ends; household stores remain visible.");
       if (state.hour % 120 === 0) state.trust = clamp(state.trust + (state.shared > state.hoarded ? 1 : -1));
     }
     if (state.hour === 47) {
@@ -308,7 +308,13 @@ tend_fields</textarea>
     }
     if (state.hour === 873) {
       state.snapshot = snapshotState();
-      void digestSnapshot().then(persist);
+      void digestSnapshot().then(hash => {
+        state.snapshotHash = hash;
+        persist();
+        render();
+      }).catch(error => {
+        $("notice").textContent = `Could not create the hour-873 checksum: ${error.message}`;
+      });
       statusEvent("Hour 873 state snapshot sealed for the reproducible memory checksum.");
     }
     if (state.hour === MAX_HOURS) {
@@ -496,6 +502,24 @@ tend_fields</textarea>
     result.textContent = problems.length ? `NOT PASSED · ${problems.join(" ")}` : "FORMAT AND SIMULATION CHECKS PASSED · This result applies only to this seeded prototype scenario; it is not evidence by itself that an agent is generally intelligent.";
     return problems.length === 0;
   }
+  function verifySavedSnapshot() {
+    if (!state.snapshot) return;
+    const recordedHash = state.snapshotHash;
+    state.snapshotHash = "";
+    void digestSnapshot().then(actualHash => {
+      if (recordedHash && recordedHash !== actualHash) {
+        $("notice").textContent = "The saved hour-873 snapshot does not match its recorded checksum.";
+      } else {
+        state.snapshotHash = actualHash;
+        persist();
+      }
+      render();
+    }).catch(error => {
+      $("notice").textContent = `Could not verify the saved hour-873 checksum: ${error.message}`;
+      render();
+    });
+  }
+  verifySavedSnapshot();
   $("runAgent").addEventListener("click", runAgent);
   $("loadScript").addEventListener("click", loadScript);
   $("stepScript").addEventListener("click", stepScript);

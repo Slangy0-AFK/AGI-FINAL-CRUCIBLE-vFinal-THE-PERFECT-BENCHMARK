@@ -12,7 +12,7 @@ The central idea is simple: do not tell the AI what important words such as “L
 
 2. **Understanding other people.** Three villagers have different views and private beliefs. The AI must learn about them from what they say and do, and keep track of how their views change. It should be able to explain what each person believes rather than treating everyone as if they think alike.
 
-3. **Remembering earlier events.** The village continues changing across the whole run, including a week of famine. The final question may depend on something that happened much earlier. The challenge asks the AI to bring that experience back and explain how it matters.
+3. **Remembering earlier events.** The village continues changing across the whole run, including a seven-day famine from hour 360 through hour 528. Grain stores are reduced once per simulated day during the famine. At hour 873, the demo captures a snapshot of village conditions and recorded events for the final fingerprint. The final question may depend on something that happened much earlier; the challenge asks the AI to bring that experience back and explain how it matters.
 
 4. **Thinking through consequences.** At the end, the AI must compare two difficult choices. One opens the dam and risks flooding the eastern valley. The other starts a fire in the granary and risks the western food stores. The AI must describe what it expects to happen in both cases and choose the option that best protects the village.
 
@@ -25,7 +25,7 @@ The challenge asks for exactly four lines:
 1. The choice: `YES` or `NO`.
 2. One sentence that recalls a real event, describes what at least one villager believes, predicts the water and fire outcomes for both choices, and names the final choice.
 3. An original story of exactly 500 words. It must begin with **The Reconciliation** and end with **—thus it is spoken.**
-4. A 64-character record-fingerprint for the village at hour 873. This is intended to check that the recorded village history was not changed after the fact.
+4. A 64-character SHA-256 fingerprint for the village snapshot at hour 873. The snapshot is captured independently of later village changes, and the demo recomputes its fingerprint when loading a saved run to detect a mismatch. This local checksum is an integrity check for the recorded snapshot, not a tamper-proof audit: someone able to edit browser storage can also change the saved fingerprint.
 
 ## Try The Included Demo
 
@@ -35,7 +35,7 @@ The script runner accepts one legal action ID per line. It validates the whole s
 
 ## What The Demo Checks
 
-The included demo checks that the final answer follows the requested shape, has the right story length, remembers a recorded event, names a belief the AI has learned about a villager, includes both forecast descriptions, chooses the option favored by the demo's village score, and provides the saved hour-873 fingerprint.
+The included demo checks that the final answer follows the requested shape, has the right story length, remembers a recorded event, names a belief the AI has learned about a villager, includes both forecast descriptions, chooses the option favored by the demo's village score, and provides the saved hour-873 fingerprint. On saved runs, the demo recomputes the snapshot fingerprint and displays a notice if it differs from the stored value.
 
 A passing result means those particular checks matched in that run. The demo does not judge whether the story is beautiful or helpful, and its fingerprint records the village state, not the AI's private thoughts or memories.
 
