@@ -39,6 +39,26 @@ The included demo checks that the final answer follows the requested shape, has 
 
 A passing result means those particular checks matched in that run. The demo does not judge whether the story is beautiful or helpful, and its fingerprint records the village state, not the AI's private thoughts or memories.
 
+## Proven Results and Benchmark Validation
+
+This repository now includes a deterministic final-answer contract validator and an automated test suite, so these checks can be reproduced locally instead of relying only on browser-side manual inspection.
+
+Files added:
+
+- `benchmark.js` — validation logic for the final four-line answer contract.
+- `tests/benchmark.test.js` — 20 automated tests covering valid answers, malformed answers, wrong event or belief claims, forecasts, choice, story length, and snapshot-hash matching.
+- `package.json` — standard `npm test` entry point for the suite.
+
+Run the proof suite locally:
+
+```bash
+npm test
+```
+
+Latest recorded test result: **20 passed, 0 failed** (`npm test`, Node.js v24.21.0).
+
+The suite verifies the response contract and expected string matching, including event references, discovered-belief formatting, exact forecast language, story length, final-choice matching, and equality with the supplied hour-873 hash. It does not run an AI agent, establish that an answer is truthful beyond the supplied scenario data, independently recompute the snapshot hash, or measure general intelligence. The browser demo separately recomputes a saved snapshot's SHA-256 checksum, subject to the local-storage limitation described above.
+
 ## What Is Still A Goal
 
 The full vision is a rich, lasting world where an AI sees, hears, and physically interacts with its surroundings. It would experience weight, resistance, temperature, and sound; villagers would have detailed, evolving lives; and the dam and fire would unfold through realistic physical effects. A group of human readers would also rate each final story for originality, clarity, usefulness, and surprise.

@@ -1,0 +1,9 @@
+{
+  "name": "agi-final-crucible-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Benchmark validator and tests for the AGI Final Crucible prototype.",
+  "scripts": {
+    "test": "node --test tests/benchmark.test.js"
+  }
+}
